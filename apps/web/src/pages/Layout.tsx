@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Calendar, Users, BriefcaseMedical, Settings, LogOut, Activity } from 'lucide-react';
+import { Calendar, Users, BriefcaseMedical, Settings, LogOut, Activity, Megaphone, Phone } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -39,7 +39,7 @@ export default function Layout({ children, user, onLogout }: LayoutProps) {
         </div>
 
         {/* Nav Links */}
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
           <NavLink
             to="/"
             className={({ isActive }) =>
@@ -80,6 +80,34 @@ export default function Layout({ children, user, onLogout }: LayoutProps) {
           >
             <BriefcaseMedical className="h-4 w-4" />
             Doctor Directory
+          </NavLink>
+
+          <NavLink
+            to="/campaigns"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150 ${
+                isActive
+                  ? 'bg-brand-500/10 border-l-2 border-brand-500 text-white shadow-inner shadow-brand-500/5'
+                  : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
+              }`
+            }
+          >
+            <Megaphone className="h-4 w-4" />
+            Outreach Campaigns
+          </NavLink>
+
+          <NavLink
+            to="/voice"
+            className={({ isActive }) =>
+              `flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition duration-150 ${
+                isActive
+                  ? 'bg-brand-500/10 border-l-2 border-brand-500 text-white shadow-inner shadow-brand-500/5'
+                  : 'text-slate-400 hover:bg-slate-900/50 hover:text-slate-200'
+              }`
+            }
+          >
+            <Phone className="h-4 w-4" />
+            AI Voice & Dialer
           </NavLink>
 
           <NavLink

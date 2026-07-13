@@ -9,6 +9,10 @@ import { PatientModule } from './modules/patient/patient.module';
 import { DoctorModule } from './modules/doctor/doctor.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
 import { AppointmentModule } from './modules/appointment/appointment.module';
+import { RetentionModule } from './modules/retention/retention.module';
+import { CampaignModule } from './modules/campaign/campaign.module';
+import { VoiceModule } from './modules/voice/voice.module';
+import { AnalyticsModule } from './modules/analytics/analytics.module';
 
 @Module({
   imports: [
@@ -22,6 +26,10 @@ import { AppointmentModule } from './modules/appointment/appointment.module';
     DoctorModule,
     CalendarModule,
     AppointmentModule,
+    RetentionModule,
+    CampaignModule,
+    VoiceModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -7,6 +7,8 @@ import Dashboard from './pages/Dashboard';
 import Patients from './pages/Patients';
 import Doctors from './pages/Doctors';
 import Settings from './pages/Settings';
+import Campaigns from './pages/Campaigns';
+import VoiceComms from './pages/VoiceComms';
 import { Activity } from 'lucide-react';
 
 function App() {
@@ -70,6 +72,8 @@ function App() {
                   <Route path="/patients" element={<Patients />} />
                   <Route path="/doctors" element={<Doctors />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/campaigns" element={<Campaigns />} />
+                  <Route path="/voice" element={<VoiceComms />} />
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
               </Layout>
