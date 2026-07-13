@@ -1,0 +1,336 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Clinic {
+  id        String   @id @default(uuid())
+  name      String
+  timezone  String
+  phone     String
+  address   String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  users             User[]
+  patients          Patient[]
+  doctors           Doctor[]
+  appointments      Appointment[]
+  waitlists         Waitlist[]
+  retentionRules    RetentionRule[]
+  campaigns         Campaign[]
+  notificationLogs  NotificationLog[]
+  voiceCalls        VoiceCall[]
+  auditLogs         AuditLog[]
+
+  @@map("clinics")
+}
+
+model User {
+  id           String   @id @default(uuid())
+  clinicId     String   @map("clinic_id")
+  name         String
+  email        String   @unique
+  phone        String
+  role         String   // "SuperAdmin", "ClinicAdmin", "Receptionist", "Doctor"
+  passwordHash String   @map("password_hash")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  doctor       Doctor?
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Patient {
+  id                String   @id @default(uuid())
+  clinicId          String   @map("clinic_id")
+  name              String
+  phone             String
+  dob               DateTime
+  gender            String
+  preferredLanguage String   @map("preferred_language")
+  consentStatus     Boolean  @default(false) @map("consent_status")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  clinic            Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  tags              PatientTag[]
+  timelines         PatientTimeline[]
+  appointments      Appointment[]
+  waitlists         Waitlist[]
+  retentionTriggers RetentionTrigger[]
+  campaignRuns      CampaignRun[]
+  notificationLogs  NotificationLog[]
+  voiceCalls        VoiceCall[]
+
+  @@index([clinicId, phone])
+  @@map("patients")
+}
+
+model PatientTag {
+  id        String  @id @default(uuid())
+  patientId String  @map("patient_id")
+  tag       String
+
+  patient   Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("patient_tags")
+}
+
+model PatientTimeline {
+  id         String   @id @default(uuid())
+  patientId  String   @map("patient_id")
+  eventType  String   @map("event_type")
+  refId      String?  @map("ref_id")
+  occurredAt DateTime @default(now()) @map("occurred_at")
+  metadata   Json
+
+  patient    Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("patient_timelines")
+}
+
+model Doctor {
+  id                       String   @id @default(uuid())
+  clinicId                 String   @map("clinic_id")
+  userId                   String   @unique @map("user_id")
+  specialization           String
+  consultationDurationMins Int      @map("consultation_duration_mins")
+
+  clinic                   Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user                     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availabilities           DoctorAvailability[]
+  leaves                   DoctorLeave[]
+  appointments             Appointment[]
+  waitlists                Waitlist[]
+  calendarSlots            CalendarSlot[]
+  calendarSyncLogs         CalendarSyncLog[]
+
+  @@map("doctors")
+}
+
+model DoctorAvailability {
+  id        String @id @default(uuid())
+  doctorId  String @map("doctor_id")
+  dayOfWeek Int    @map("day_of_week") // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  startTime String @map("start_time")   // "HH:mm"
+  endTime   String @map("end_time")     // "HH:mm"
+
+  doctor    Doctor @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_availabilities")
+}
+
+model DoctorLeave {
+  id        String   @id @default(uuid())
+  doctorId  String   @map("doctor_id")
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
+  reason    String
+
+  doctor    Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("doctor_leaves")
+}
+
+model Appointment {
+  id           String   @id @default(uuid())
+  clinicId     String   @map("clinic_id")
+  patientId    String   @map("patient_id")
+  doctorId     String   @map("doctor_id")
+  scheduledAt  DateTime @map("scheduled_at")
+  durationMins Int      @map("duration_mins")
+  status       String   // "booked", "confirmed", "completed", "cancelled", "no_show", "waitlisted"
+  channel      String   // "web", "voice", "whatsapp", "walkin"
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor       Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  calendarSyncLogs CalendarSyncLog[]
+
+  @@index([doctorId, scheduledAt])
+  @@map("appointments")
+}
+
+model Waitlist {
+  id            String   @id @default(uuid())
+  clinicId      String   @map("clinic_id")
+  patientId     String   @map("patient_id")
+  doctorId      String   @map("doctor_id")
+  desiredWindow String   @map("desired_window")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient       Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  doctor        Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@map("waitlists")
+}
+
+model CalendarSlot {
+  id          String    @id @default(uuid())
+  doctorId    String    @map("doctor_id")
+  date        DateTime
+  startTime   String    @map("start_time") // "HH:mm"
+  endTime     String    @map("end_time")   // "HH:mm"
+  isLocked    Boolean   @default(false) @map("is_locked")
+  lockedUntil DateTime? @map("locked_until")
+
+  doctor      Doctor    @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+
+  @@index([doctorId, date])
+  @@map("calendar_slots")
+}
+
+model CalendarSyncLog {
+  id              String   @id @default(uuid())
+  doctorId        String   @map("doctor_id")
+  provider        String   // "google"
+  externalEventId String   @map("external_event_id")
+  appointmentId   String?  @map("appointment_id")
+  syncedAt        DateTime @default(now()) @map("synced_at")
+
+  doctor          Doctor   @relation(fields: [doctorId], references: [id], onDelete: Cascade)
+  appointment     Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@map("calendar_sync_logs")
+}
+
+model RetentionRule {
+  id            String   @id @default(uuid())
+  clinicId      String   @map("clinic_id")
+  name          String
+  conditionJson Json     @map("condition_json")
+  actionJson    Json     @map("action_json")
+  isActive      Boolean  @default(true) @map("is_active")
+  priority      Int      @default(0)
+
+  clinic        Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  triggers      RetentionTrigger[]
+  campaigns     Campaign[]
+
+  @@map("retention_rules")
+}
+
+model RetentionTrigger {
+  id          String   @id @default(uuid())
+  ruleId      String   @map("rule_id")
+  patientId   String   @map("patient_id")
+  triggeredAt DateTime @default(now()) @map("triggered_at")
+  status      String   // "pending", "actioned", "dismissed"
+
+  rule        RetentionRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  patient     Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([status, triggeredAt])
+  @@map("retention_triggers")
+}
+
+model Campaign {
+  id        String   @id @default(uuid())
+  clinicId  String   @map("clinic_id")
+  name      String
+  type      String
+  ruleId    String   @map("rule_id")
+  status    String
+  startsAt  DateTime @map("starts_at")
+  endsAt    DateTime @map("ends_at")
+
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  rule      RetentionRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  runs      CampaignRun[]
+
+  @@map("campaigns")
+}
+
+model CampaignRun {
+  id           String   @id @default(uuid())
+  campaignId   String   @map("campaign_id")
+  patientId    String   @map("patient_id")
+  status       String   // "queued", "sent", "failed", "responded"
+  attemptCount Int      @default(0) @map("attempt_count")
+
+  campaign     Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("campaign_runs")
+}
+
+model NotificationLog {
+  id                String   @id @default(uuid())
+  clinicId          String   @map("clinic_id")
+  patientId         String   @map("patient_id")
+  channel           String   // "whatsapp", "sms", "email"
+  template          String
+  status            String
+  providerMessageId String?  @map("provider_message_id")
+  sentAt            DateTime @default(now()) @map("sent_at")
+
+  clinic            Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient           Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@map("notification_logs")
+}
+
+model VoiceCall {
+  id           String   @id @default(uuid())
+  clinicId     String   @map("clinic_id")
+  patientId    String   @map("patient_id")
+  direction    String   // "inbound", "outbound"
+  status       String
+  durationSecs Int?     @map("duration_secs")
+  recordingUrl String?  @map("recording_url")
+  transcript   String?
+  aiSummary    String?  @map("ai_summary")
+  startedAt    DateTime @default(now()) @map("started_at")
+  endedAt      DateTime? @map("ended_at")
+
+  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  patient      Patient  @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  contexts     ConversationContext[]
+
+  @@map("voice_calls")
+}
+
+model ConversationContext {
+  id            String   @id @default(uuid())
+  callId        String?  @map("call_id")
+  chatSessionId String?  @map("chat_session_id")
+  stateJson     Json     @map("state_json")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  call          VoiceCall? @relation(fields: [callId], references: [id], onDelete: Cascade)
+
+  @@map("conversation_contexts")
+}
+
+model EventLog {
+  id          String   @id @default(uuid())
+  eventType   String   @map("event_type")
+  payloadJson Json     @map("payload_json")
+  occurredAt  DateTime @default(now()) @map("occurred_at")
+
+  @@map("event_logs")
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  clinicId   String   @map("clinic_id")
+  userId     String   @map("user_id")
+  action     String
+  entity     String
+  entityId   String   @map("entity_id")
+  beforeJson Json?    @map("before_json")
+  afterJson  Json?    @map("after_json")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  clinic     Clinic   @relation(fields: [clinicId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
+}

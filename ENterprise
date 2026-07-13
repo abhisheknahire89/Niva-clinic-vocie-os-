@@ -1,0 +1,103 @@
+AI Patient Retention Platform (Enterprise Edition)
+
+Master Product & Engineering Blueprint
+Version: 1.0
+Purpose: This document serves as the implementation blueprint for building an AI-powered patient retention, appointment automation, and voice calling platform using Sarvam AI, FastAPI, PostgreSQL, Redis, WhatsApp APIs, Google Calendar, and an AI coding platform such as Antigravity.
+
+Project Vision
+
+Build an enterprise-grade platform that automatically identifies patients due for follow-ups, contacts them using multilingual AI voice agents, schedules appointments, synchronizes clinic calendars, updates clinic management systems, and provides actionable analytics while maintaining low latency and high reliability.
+
+Volumes Planned
+
+1. Executive Summary
+
+2. Enterprise PRD
+
+3. Business Requirements
+
+4. System Architecture
+
+5. Low-LLatency Voice Architecture
+
+6. AI Conversation Engine
+
+7. Patient Retention Engine
+
+8. Appointment Engine
+
+9. Calendar Engine
+
+10. Campaign Engine
+
+11. Receptionist Dashboard
+
+12. Doctor Dashboard
+
+13. Admin Dashboard
+
+14. Analytics
+
+15. Database Design
+
+16. Backend APIs
+
+17. Frontend
+
+18. Security
+
+19. Deployment
+
+20. Testing
+
+21. Antigravity Implementation Prompts
+
+22. Roadmap
+
+Core Modules
+
+Authentication & RBAC
+
+Clinic Management
+
+Doctor Management
+
+Patient Timeline
+
+Appointment Scheduling
+
+Calendar Sync
+
+Retention Engine
+
+Campaign Scheduler
+
+Voice AI
+
+Conversation Manager
+
+Sarvam Integration
+
+WhatsApp/SMS/Email
+
+Analytics
+
+Audit Logs
+
+Monitoring
+
+Deployment
+
+Architecture Principles
+
+- Event-driven microservices
+- Streaming voice pipeline (<1 second conversational latency)
+- Redis caching for availability and session state
+- Function-calling for appointment booking
+- PostgreSQL as source of truth
+- Google Calendar and HMS synchronization
+- Horizontal scalability and observability
+
+Next Deliverables
+
+This document is the master index. The detailed blueprint will be expanded into separate volumes, each containing module-level PRDs, architecture diagrams, database schemas, APIs, UI specifications, sequence diagrams, state machines, acceptance criteria, and implementation prompts for Antigravity.
